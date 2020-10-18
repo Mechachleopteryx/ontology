@@ -208,6 +208,17 @@ func GetOntHolderUnboundDeadline() uint32 {
 	}
 }
 
+func GetNewPeerCostHeight() uint32 {
+	switch DefConfig.P2PNode.NetworkId {
+	case NETWORK_ID_MAIN_NET:
+		return constants.BLOCKHEIGHT_NEW_PEER_COST_MAINNET
+	case NETWORK_ID_POLARIS_NET:
+		return constants.BLOCKHEIGHT_NEW_PEER_COST_POLARIS
+	default:
+		return 0
+	}
+}
+
 // the end of unbound timestamp offset from genesis block's timestamp
 func GetGovUnboundDeadline() (uint32, uint64) {
 	count := uint64(0)
@@ -720,6 +731,9 @@ func (this *OntologyConfig) GetBookkeepers() ([]keypair.PublicKey, error) {
 	pubKeys := make([]keypair.PublicKey, 0, len(bookKeepers))
 	for _, key := range bookKeepers {
 		pubKey, err := hex.DecodeString(key)
+		if err != nil {
+			return nil, err
+		}
 		k, err := keypair.DeserializePublicKey(pubKey)
 		if err != nil {
 			return nil, fmt.Errorf("Incorrectly book keepers key:%s", key)

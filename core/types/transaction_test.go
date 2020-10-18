@@ -16,38 +16,26 @@
  * along with The ontology.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package states
+package types
 
 import (
-	"io"
+	"math"
+	"testing"
 
-	"github.com/ontio/ontology/common"
+	"github.com/ontio/ontology/core/payload"
+	"github.com/stretchr/testify/assert"
 )
 
-type WasmContractParam struct {
-	Address common.Address
-	Args    []byte
-}
-
-func (this *WasmContractParam) Serialization(sink *common.ZeroCopySink) {
-	sink.WriteAddress(this.Address)
-	sink.WriteVarBytes([]byte(this.Args))
-}
-
-// `ContractInvokeParam.Args` has reference of `source`
-func (this *WasmContractParam) Deserialization(source *common.ZeroCopySource) error {
-	var irregular, eof bool
-	this.Address, eof = source.NextAddress()
-	if eof {
-		return io.ErrUnexpectedEOF
+func TestTransaction_SigHashForChain(t *testing.T) {
+	mutable := &MutableTransaction{
+		TxType:  InvokeNeo,
+		Payload: &payload.InvokeCode{},
 	}
 
-	this.Args, _, irregular, eof = source.NextVarBytes()
-	if irregular {
-		return common.ErrIrregularData
-	}
-	if eof {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
+	tx, err := mutable.IntoImmutable()
+	assert.Nil(t, err)
+
+	assert.Equal(t, tx.Hash(), tx.SigHashForChain(0))
+	assert.NotEqual(t, tx.Hash(), tx.SigHashForChain(1))
+	assert.NotEqual(t, tx.Hash(), tx.SigHashForChain(math.MaxUint32))
 }
